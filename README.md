@@ -4,8 +4,34 @@ OpenHarmony 设备投屏 CLI 工具，通过 USB 连接实现设备屏幕实时�
 
 ## 快速安装
 
+### 方式一：一键安装（推荐，无需 sudo）
+
+```bash
+curl -sSL https://raw.githubusercontent.com/robin8yeung/ohscrcpy-cli/main/scripts/install.sh | bash -s -- --user
+```
+
+### 方式二：交互式选择
+
 ```bash
 curl -sSL https://raw.githubusercontent.com/robin8yeung/ohscrcpy-cli/main/scripts/install.sh | sh
+```
+
+### 方式三：系统级安装（需要 sudo）
+
+```bash
+curl -sSL https://raw.githubusercontent.com/robin8yeung/ohscrcpy-cli/main/scripts/install.sh | bash -s -- --system
+```
+
+## 安装后配置
+
+如果安装到用户目录（`~/.ohscrcpy/bin`），需要重新加载 Shell 配置：
+
+```bash
+# Zsh 用户
+source ~/.zshrc
+
+# Bash 用户
+source ~/.bashrc
 ```
 
 ## 前置要求

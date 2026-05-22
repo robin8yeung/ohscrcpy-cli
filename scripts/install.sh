@@ -3,7 +3,7 @@ set -e
 
 BINARY_NAME="ohscrcpy"
 INSTALL_DIR="/usr/local/bin"
-GITHUB_REPO="robin8yeung/ohos-scrcpy-cli"
+GITHUB_REPO="robin8yeung/ohscrcpy-cli"
 
 detect_arch() {
   if [[ "$(uname -m)" == "arm64" ]]; then
@@ -84,6 +84,7 @@ echo "验证二进制文件..."
 chmod +x "$TMP_FILE"
 
 echo "安装到 $INSTALL_DIR..."
+echo "需要管理员权限，请输入密码："
 sudo mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
 
 if [[ ! -f "$INSTALL_DIR/$BINARY_NAME" ]]; then

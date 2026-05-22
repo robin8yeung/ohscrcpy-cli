@@ -46,7 +46,7 @@ done
 if [[ -z "$LATEST_TAG" ]]; then
   echo "API 请求受限，尝试备用方式..."
   LATEST_TAG=$(curl -s "https://github.com/$GITHUB_REPO/releases" 2>/dev/null \
-    | grep -o '/releases/tag/[^"]*' | head -1 | sed 's|/releases/tag/||')
+    | grep -o "releases/tag/[^\"']*" | head -1 | sed 's|releases/tag/||')
 fi
 
 if [[ -z "$LATEST_TAG" ]]; then

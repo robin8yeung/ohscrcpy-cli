@@ -4,6 +4,7 @@ mod server;
 mod connection;
 mod control;
 mod decoder;
+mod icon;
 mod renderer;
 
 use anyhow::{anyhow, Context, Result};
@@ -18,7 +19,7 @@ use tracing::debug;
 
 use args::Args;
 use connection::{parse_video_config, parse_video_frame, read_frame, write_frame, FrameType};
-use control::{encode_key_back, encode_touch_down, encode_touch_move, encode_touch_up, encode_video_params};
+use control::{encode_key_back, encode_key_event, encode_touch_down, encode_touch_move, encode_touch_up, encode_video_params};
 use decoder::vtb::VtbDecoder;
 use renderer::{sdl, AppEvent};
 
@@ -30,6 +31,8 @@ fn main() {
 }
 
 fn run() -> Result<()> {
+    icon::set_process_icon();
+
     let args = Args::parse();
     init_logging(args.verbose);
 
@@ -276,6 +279,8 @@ fn run() -> Result<()> {
                     ctrl_tx.send(encode_touch_up(x, y, 0)).ok();
                 }
                 AppEvent::KeyBack => { ctrl_tx.send(encode_key_back()).ok(); }
+                AppEvent::KeyDown { keycode } => { ctrl_tx.send(encode_key_event(keycode, true)).ok(); }
+                AppEvent::KeyUp { keycode } => { ctrl_tx.send(encode_key_event(keycode, false)).ok(); }
                 AppEvent::WindowResized { .. } => {}
             }
         }

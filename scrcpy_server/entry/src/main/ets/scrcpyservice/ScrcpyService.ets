@@ -38,7 +38,7 @@ export default class ScrcpyService extends ServiceExtensionAbility {
       this.captureCfg.width, this.captureCfg.height, this.captureCfg.frameRate);
 
     try {
-      const ok = startServer(
+      const ok: boolean = startServer(
         SCRCPY_PORT,
         this.captureCfg,
         (hasClient: boolean) => this.onPresence(hasClient),

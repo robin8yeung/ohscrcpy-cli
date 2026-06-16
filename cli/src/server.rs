@@ -11,7 +11,7 @@ const BUNDLED_VERSION: u32 = 1;
 
 #[derive(rust_embed::RustEmbed)]
 #[folder = "assets/"]
-struct Assets;
+pub struct Assets;
 
 /// 检查设备上服务端的版本号（None = 未安装）
 pub fn check_server_version(hdc_path: &PathBuf, sn: &str) -> Result<Option<u32>> {

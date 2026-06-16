@@ -5,6 +5,8 @@ pub enum AppEvent {
     TouchMove { x_norm: f32, y_norm: f32 },
     TouchUp   { x_norm: f32, y_norm: f32 },
     KeyBack,
+    KeyDown { keycode: u32 },
+    KeyUp   { keycode: u32 },
     Quit,
     WindowResized { width: u32, height: u32 },
 }

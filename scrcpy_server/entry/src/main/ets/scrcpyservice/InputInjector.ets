@@ -298,18 +298,43 @@ export class InputInjector {
     if (text.length === 0) return;
     const pasteData: pasteboard.PasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text);
     const board: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard();
-    board.setData(pasteData).then(() => {
-      this.injectSingleKey(KeyCode.KEYCODE_CTRL_LEFT, true);
-      setTimeout(() => {
-        this.injectSingleKey(KeyCode.KEYCODE_V, true);
-        setTimeout(() => {
-          this.injectSingleKey(KeyCode.KEYCODE_V, false);
-          this.injectSingleKey(KeyCode.KEYCODE_CTRL_LEFT, false);
-        }, 20);
-      }, 20);
+
+    // 1. 缓存原剪贴板内容（失败时记 null，不影响注入）
+    let localPasteData: pasteboard.PasteData | null = null;
+    board.getData().then((data: pasteboard.PasteData) => {
+      localPasteData = data;
     }).catch((e: Error) => {
-      hilog.warn(DOMAIN, TAG, 'clipboard setData failed: %{public}s', e.message ?? JSON.stringify(e));
+      hilog.warn(DOMAIN, TAG, 'clipboard getData failed: %{public}s', e.message ?? JSON.stringify(e));
+    }).then(() => {
+      // 2. 写入待注入文本 → Ctrl+V 粘贴 → 恢复原剪贴板
+      board.setData(pasteData).then(() => {
+        this.injectSingleKey(KeyCode.KEYCODE_CTRL_LEFT, true);
+        setTimeout(() => {
+          this.injectSingleKey(KeyCode.KEYCODE_V, true);
+          setTimeout(() => {
+            this.injectSingleKey(KeyCode.KEYCODE_V, false);
+            this.injectSingleKey(KeyCode.KEYCODE_CTRL_LEFT, false);
+
+            // 3. 恢复原剪贴板内容
+            this.restoreClipboard(board, localPasteData);
+          }, 20);
+        }, 20);
+      }).catch((e: Error) => {
+        hilog.warn(DOMAIN, TAG, 'clipboard setData failed: %{public}s', e.message ?? JSON.stringify(e));
+      });
     });
+  }
+
+  private restoreClipboard(board: pasteboard.SystemPasteboard, originalData: pasteboard.PasteData | null): void {
+    if (originalData !== null) {
+      board.setData(originalData).catch((e: Error) => {
+        hilog.warn(DOMAIN, TAG, 'clipboard restore setData failed: %{public}s', e.message ?? JSON.stringify(e));
+      });
+    } else {
+      board.clear().catch((e: Error) => {
+        hilog.warn(DOMAIN, TAG, 'clipboard restore clear failed: %{public}s', e.message ?? JSON.stringify(e));
+      });
+    }
   }
 
   private adjustVolume(up: boolean): void {

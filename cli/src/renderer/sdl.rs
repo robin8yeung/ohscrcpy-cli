@@ -159,6 +159,16 @@ pub fn poll_events(event_pump: &mut sdl2::EventPump, renderer: &SdlRenderer) -> 
             } => {
                 events.push(AppEvent::WindowResized { width: w as u32, height: h as u32 });
             }
+            Event::KeyDown { scancode: Some(scancode), repeat: false, .. } => {
+                if let Some(keycode) = crate::control::sdl_to_oh_keycode(scancode) {
+                    events.push(AppEvent::KeyDown { keycode });
+                }
+            }
+            Event::KeyUp { scancode: Some(scancode), .. } => {
+                if let Some(keycode) = crate::control::sdl_to_oh_keycode(scancode) {
+                    events.push(AppEvent::KeyUp { keycode });
+                }
+            }
             _ => {}
         }
     }

@@ -46,6 +46,8 @@ impl SdlRenderer {
 
         let texture_creator = canvas.texture_creator();
 
+        video.text_input().start();
+
         Ok((
             SdlRenderer {
                 texture: None,
@@ -134,6 +136,8 @@ impl SdlRenderer {
 /// 轮询 SDL2 事件，转换为 AppEvent
 pub fn poll_events(event_pump: &mut sdl2::EventPump, renderer: &SdlRenderer) -> Vec<AppEvent> {
     let mut events = Vec::new();
+    let mut pending_char_keys: Vec<u32> = Vec::new();
+    let mut has_text_input = false;
     for ev in event_pump.poll_iter() {
         match ev {
             Event::Quit { .. } => {
@@ -161,7 +165,11 @@ pub fn poll_events(event_pump: &mut sdl2::EventPump, renderer: &SdlRenderer) -> 
             }
             Event::KeyDown { scancode: Some(scancode), repeat: false, .. } => {
                 if let Some(keycode) = crate::control::sdl_to_oh_keycode(scancode) {
-                    events.push(AppEvent::KeyDown { keycode });
+                    if crate::control::is_character_key(scancode) {
+                        pending_char_keys.push(keycode);
+                    } else {
+                        events.push(AppEvent::KeyDown { keycode });
+                    }
                 }
             }
             Event::KeyUp { scancode: Some(scancode), .. } => {
@@ -169,8 +177,20 @@ pub fn poll_events(event_pump: &mut sdl2::EventPump, renderer: &SdlRenderer) -> 
                     events.push(AppEvent::KeyUp { keycode });
                 }
             }
+            Event::TextInput { text, .. } => {
+                if !text.is_empty() {
+                    events.push(AppEvent::TextInput { text });
+                    has_text_input = true;
+                }
+            }
             _ => {}
         }
     }
+    if !has_text_input {
+        for keycode in pending_char_keys {
+            events.push(AppEvent::KeyDown { keycode });
+        }
+    }
+    // 如果有 TextInput，丢弃所有缓存的字符键（它们是 IME 拼音输入产生的）
     events
 }

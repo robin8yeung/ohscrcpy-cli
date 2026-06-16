@@ -7,6 +7,7 @@ pub enum AppEvent {
     KeyBack,
     KeyDown { keycode: u32 },
     KeyUp   { keycode: u32 },
+    TextInput { text: String },
     Quit,
     WindowResized { width: u32, height: u32 },
 }

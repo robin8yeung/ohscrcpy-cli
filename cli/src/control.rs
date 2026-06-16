@@ -73,6 +73,38 @@ fn encode_touch(sub_type: ControlSubType, x: u32, y: u32, pointer_id: u16) -> Ve
     buf
 }
 
+/// 判断 SDL2 Scancode 是否为"字符键"（字母、数字、符号）。
+///
+/// 字符键：A-Z、0-9、Space、以及 Minus/Equals/LeftBracket/RightBracket/
+/// Backslash/Semicolon/Apostrophe/Grave/Comma/Period/Slash。
+/// 功能键（F1-F12、方向键、Enter、Backspace、Escape、Tab、修饰键、
+/// 导航键、小键盘等）返回 false。
+pub fn is_character_key(scancode: sdl2::keyboard::Scancode) -> bool {
+    use sdl2::keyboard::Scancode;
+    matches!(
+        scancode,
+        // 字母 A-Z
+        Scancode::A | Scancode::B | Scancode::C | Scancode::D
+        | Scancode::E | Scancode::F | Scancode::G | Scancode::H
+        | Scancode::I | Scancode::J | Scancode::K | Scancode::L
+        | Scancode::M | Scancode::N | Scancode::O | Scancode::P
+        | Scancode::Q | Scancode::R | Scancode::S | Scancode::T
+        | Scancode::U | Scancode::V | Scancode::W | Scancode::X
+        | Scancode::Y | Scancode::Z
+        // 数字 0-9
+        | Scancode::Num0 | Scancode::Num1 | Scancode::Num2 | Scancode::Num3
+        | Scancode::Num4 | Scancode::Num5 | Scancode::Num6 | Scancode::Num7
+        | Scancode::Num8 | Scancode::Num9
+        // 空格
+        | Scancode::Space
+        // 符号键
+        | Scancode::Minus | Scancode::Equals
+        | Scancode::LeftBracket | Scancode::RightBracket | Scancode::Backslash
+        | Scancode::Semicolon | Scancode::Apostrophe | Scancode::Grave
+        | Scancode::Comma | Scancode::Period | Scancode::Slash
+    )
+}
+
 /// 将 SDL2 Scancode（物理键位）映射为 OpenHarmony KeyCode
 /// 返回 None 表示该键无需转发（如未知的多媒体键）
 pub fn sdl_to_oh_keycode(scancode: sdl2::keyboard::Scancode) -> Option<u32> {
@@ -294,5 +326,59 @@ mod tests {
         use sdl2::keyboard::Scancode;
         // 一个不在映射表中的键（如 Pause）应返回 None
         assert_eq!(sdl_to_oh_keycode(Scancode::Pause), None);
+    }
+
+    // ── is_character_key 测试 ──────────────────────────────────────
+
+    #[test]
+    fn test_is_character_key_letters() {
+        use sdl2::keyboard::Scancode;
+        assert!(is_character_key(Scancode::A));
+        assert!(is_character_key(Scancode::Z));
+        assert!(is_character_key(Scancode::M));
+    }
+
+    #[test]
+    fn test_is_character_key_numbers() {
+        use sdl2::keyboard::Scancode;
+        assert!(is_character_key(Scancode::Num0));
+        assert!(is_character_key(Scancode::Num9));
+        assert!(is_character_key(Scancode::Num5));
+    }
+
+    #[test]
+    fn test_is_character_key_symbols() {
+        use sdl2::keyboard::Scancode;
+        assert!(is_character_key(Scancode::Space));
+        assert!(is_character_key(Scancode::Semicolon));
+        assert!(is_character_key(Scancode::Slash));
+        assert!(is_character_key(Scancode::Minus));
+        assert!(is_character_key(Scancode::Equals));
+        assert!(is_character_key(Scancode::LeftBracket));
+        assert!(is_character_key(Scancode::RightBracket));
+        assert!(is_character_key(Scancode::Backslash));
+        assert!(is_character_key(Scancode::Apostrophe));
+        assert!(is_character_key(Scancode::Grave));
+        assert!(is_character_key(Scancode::Comma));
+        assert!(is_character_key(Scancode::Period));
+    }
+
+    #[test]
+    fn test_is_character_key_function_keys() {
+        use sdl2::keyboard::Scancode;
+        // 功能键 F1-F12
+        assert!(!is_character_key(Scancode::F1));
+        assert!(!is_character_key(Scancode::F5));
+        assert!(!is_character_key(Scancode::F12));
+        // 方向键
+        assert!(!is_character_key(Scancode::Up));
+        assert!(!is_character_key(Scancode::Down));
+        // 特殊键
+        assert!(!is_character_key(Scancode::Return));
+        assert!(!is_character_key(Scancode::Escape));
+        assert!(!is_character_key(Scancode::Backspace));
+        // 修饰键
+        assert!(!is_character_key(Scancode::LShift));
+        assert!(!is_character_key(Scancode::LCtrl));
     }
 }

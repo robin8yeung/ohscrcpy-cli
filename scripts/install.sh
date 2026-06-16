@@ -136,7 +136,11 @@ if [[ "$INSTALL_TYPE" == "user" ]]; then
   # 用户目录安装
   INSTALL_DIR="$USER_INSTALL_DIR"
   mkdir -p "$INSTALL_DIR"
-  mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+  if ! mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME" 2>/dev/null; then
+    # 如果 mv 失败，可能是文件被占用，尝试先删除再复制
+    rm -f "$INSTALL_DIR/$BINARY_NAME"
+    mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+  fi
   echo ""
   echo "✅ $BINARY_NAME v$LATEST_TAG 安装到用户目录！"
   add_to_path "$INSTALL_DIR"
@@ -144,7 +148,11 @@ elif [[ "$INSTALL_TYPE" == "system" ]]; then
   # 系统目录安装
   INSTALL_DIR="$SYSTEM_INSTALL_DIR"
   echo "需要管理员权限，请输入密码："
-  sudo mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+  if ! sudo mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME" 2>/dev/null; then
+    # 如果 mv 失败，尝试先删除再复制
+    sudo rm -f "$INSTALL_DIR/$BINARY_NAME"
+    sudo mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+  fi
   echo ""
   echo "✅ $BINARY_NAME v$LATEST_TAG 安装到系统目录！"
 else
@@ -159,7 +167,10 @@ else
     1)
       INSTALL_DIR="$USER_INSTALL_DIR"
       mkdir -p "$INSTALL_DIR"
-      mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+      if ! mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME" 2>/dev/null; then
+        rm -f "$INSTALL_DIR/$BINARY_NAME"
+        mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+      fi
       echo ""
       echo "✅ $BINARY_NAME v$LATEST_TAG 安装到用户目录！"
       add_to_path "$INSTALL_DIR"
@@ -167,7 +178,10 @@ else
     2)
       INSTALL_DIR="$SYSTEM_INSTALL_DIR"
       echo "需要管理员权限，请输入密码："
-      sudo mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+      if ! sudo mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME" 2>/dev/null; then
+        sudo rm -f "$INSTALL_DIR/$BINARY_NAME"
+        sudo mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+      fi
       echo ""
       echo "✅ $BINARY_NAME v$LATEST_TAG 安装到系统目录！"
       ;;
@@ -180,8 +194,23 @@ else
 fi
 
 if [[ ! -f "$INSTALL_DIR/$BINARY_NAME" ]]; then
-  echo "错误：安装失败"
+  echo "错误：安装失败，文件不存在"
   exit 1
+fi
+
+# 验证安装版本
+INSTALLED_VERSION=$("$INSTALL_DIR/$BINARY_NAME" --version 2>/dev/null | awk '{print $2}')
+if [[ "$INSTALLED_VERSION" != "$LATEST_TAG" ]]; then
+  echo ""
+  echo "⚠️  警告：安装的二进制版本 ($INSTALLED_VERSION) 与预期 ($LATEST_TAG) 不符"
+  echo "可能存在以下问题："
+  echo "  1. PATH 中有旧版本的 ohscrcpy"
+  echo "  2. 文件替换失败"
+  echo ""
+  echo "建议手动检查："
+  echo "  $INSTALL_DIR/$BINARY_NAME --version"
+else
+  echo "✅ 版本验证通过：$INSTALLED_VERSION"
 fi
 
 echo ""
